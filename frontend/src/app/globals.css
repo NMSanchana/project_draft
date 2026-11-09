@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@import "../styles/animations.css";
+
+:root {
+  --bg: #f1f3f7;
+  --bg-gradient-start: #e3f5eb;
+  --bg-gradient-end: #ffffff;
+  --surface: #ffffff;
+  --surface-dark: #080c14;
+  --surface-dark-soft: #0e1523;
+  --ink: #0f172a;
+  --ink-light: #64748b;
+  --muted: #94a3b8;
+  --line: #e2e8f0;
+  --brand: #10b981;
+  --brand-hover: #059669;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-dark-soft: var(--surface-dark-soft);
+  --color-ink: var(--ink);
+  --color-ink-light: var(--ink-light);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --font-sans: "Inter", var(--font-geist-sans);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), "Inter", Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #030712;
+  color: #ffffff;
+}
+
+/* Prevent outline color jumps and flashing rings on theme switch */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Custom ultra-thin sleek scrollbar for chatbot and tables */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}

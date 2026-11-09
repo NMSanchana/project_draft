@@ -1,0 +1,44 @@
+# Qdrant (vector DB) always; Ollama and the AI service only on request.
+#   docker compose up -d qdrant                    # normal use (scripts/start-all.sh does this)
+#   docker compose --profile ollama up -d          # + Ollama in a container (slower on Mac than native)
+#   docker compose --profile full up -d --build    # + AI service in a container
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: bip-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: bip-ollama
+    profiles: ["ollama"]
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/ollama:/root/.ollama
+
+  ai-service:
+    build: ./ai-service
+    container_name: bip-ai-service
+    profiles: ["full"]
+    restart: unless-stopped
+    env_file: ./ai-service/.env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      OLLAMA_URL: ${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
+      DATABASE_URL: sqlite:////app/data/ai_service.db
+      UPLOAD_DIR: /app/data/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+    volumes:
+      - ./ai-service/data:/app/data
+      - ./ai-service/knowledge_base:/app/knowledge_base

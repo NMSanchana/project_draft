@@ -1,0 +1,15 @@
+{
+  "name": "business-insight-platform",
+  "private": true,
+  "description": "Convenience scripts for the whole stack (frontend + NestJS + AI service + Qdrant + Ollama). The apps keep their own package.json files.",
+  "scripts": {
+    "setup": "./scripts/setup.sh",
+    "dev:all": "./scripts/start-all.sh",
+    "stop:all": "./scripts/stop-all.sh",
+    "health": "./scripts/healthcheck.sh",
+    "ingest:docs": "./scripts/ingest_docs.sh",
+    "test:ai": "cd ai-service && .venv/bin/python -m pytest -q",
+    "smoke": "ai-service/.venv/bin/python scripts/e2e_smoke.py",
+    "sample:data": "ai-service/.venv/bin/python scripts/generate_sample_data.py"
+  }
+}

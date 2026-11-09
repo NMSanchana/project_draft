@@ -1,0 +1,93 @@
+diff -ruN a/frontend/src/components/dashboard/Dashboard.tsx b/frontend/src/components/dashboard/Dashboard.tsx
+--- a/frontend/src/components/dashboard/Dashboard.tsx	2026-10-20 20:04:03.015619007 +0000
++++ b/frontend/src/components/dashboard/Dashboard.tsx	2026-10-20 20:04:03.057182587 +0000
+@@ -29,7 +29,7 @@
+   saveStoredAnalytics,
+   clearStoredAnalytics,
+ } from '@/lib/analytics';
+-import { analyzeDataset, pollDataset, deleteDataset, sendChat, AiServiceError } from '@/lib/aiClient';
++import { analyzeDataset, pollDataset, deleteDataset, sendChat, uploadDocument, AiServiceError } from '@/lib/aiClient';
+ 
+ interface DashboardProps {
+   initialTab?: DashboardTab;
+@@ -208,6 +208,33 @@
+     const file = e.target.files?.[0];
+     if (!file) return;
+ 
++    // Documents (PDF/TXT/MD) go to the document Q&A index instead of the CSV pipeline
++    if (/\.(pdf|txt|md)$/i.test(file.name)) {
++      setIsProcessing(true);
++      setUploadFeedback(null);
++      void (async () => {
++        try {
++          const res = await uploadDocument(file);
++          setUploadFeedback({
++            type: 'success',
++            message:
++              res.status === 'duplicate'
++                ? `"${file.name}" was already indexed.`
++                : `"${file.name}" indexed (${res.chunks} passages). Ask about it in the chat.`,
++          });
++        } catch (err) {
++          setUploadFeedback({
++            type: 'error',
++            message: err instanceof AiServiceError ? err.message : 'Document upload failed. Please try again.',
++          });
++        } finally {
++          setIsProcessing(false);
++          if (fileInputRef.current) fileInputRef.current.value = '';
++        }
++      })();
++      return;
++    }
++
+     if (!file.name.endsWith('.csv')) {
+       setUploadFeedback({ type: 'error', message: 'Only .csv files are supported.' });
+       return;
+@@ -428,7 +455,7 @@
+                       type="file"
+                       ref={fileInputRef}
+                       onChange={handleFileChange}
+-                      accept=".csv"
++                      accept=".csv,.pdf,.txt,.md"
+                       className="hidden"
+                     />
+                     <button
+diff -ruN a/frontend/src/components/documents/DocumentsView.tsx b/frontend/src/components/documents/DocumentsView.tsx
+--- a/frontend/src/components/documents/DocumentsView.tsx	2026-10-20 20:04:03.022425936 +0000
++++ b/frontend/src/components/documents/DocumentsView.tsx	2026-10-20 20:04:03.057293231 +0000
+@@ -65,7 +65,7 @@
+               type="file"
+               ref={fileInputRef}
+               onChange={onUploadFile}
+-              accept=".csv,.xlsx,.json"
++              accept=".csv,.xlsx,.json,.pdf,.txt,.md"
+               className="hidden"
+             />
+             <button
+diff -ruN a/frontend/src/lib/aiClient.ts b/frontend/src/lib/aiClient.ts
+--- a/frontend/src/lib/aiClient.ts	2026-10-20 20:04:03.029596987 +0000
++++ b/frontend/src/lib/aiClient.ts	2026-10-20 20:04:03.056854923 +0000
+@@ -74,6 +74,22 @@
+   return res.json();
+ }
+ 
++export interface DocumentUploadResult {
++  id: string;
++  fileName: string;
++  chunks: number;
++  status: 'ingested' | 'duplicate';
++}
++
++/** Upload a PDF/TXT/MD for document Q&A (private to the signed-in user). */
++export async function uploadDocument(file: File): Promise<DocumentUploadResult> {
++  const form = new FormData();
++  form.append('file', file);
++  form.append('scope', 'user');
++  const res = await fetchWithAuth('/ai/v1/rag/documents', { method: 'POST', body: form });
++  return res.json();
++}
++
+ export async function getDataset(datasetId: string): Promise<ProcessedAnalytics> {
+   const res = await fetchWithAuth(`/ai/v1/datasets/${encodeURIComponent(datasetId)}`);
+   return res.json();
